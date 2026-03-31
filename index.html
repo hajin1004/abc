@@ -5,17 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LUCKY BOX</title>
     <style>
-        /* 1. 배경화면 최적화 (레드 네온 컨셉) */
+        /* 1. 배경 및 전체 레이아웃 */
         body { 
             background: #000 url('https://raw.githubusercontent.com/hajin1004/abc/main/bg.png') no-repeat center center; 
             background-size: cover; color: #fff; font-family: -apple-system, sans-serif; 
             display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; overflow: hidden; 
         }
-        body::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: -1; }
+        body::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: -1; }
 
         .container { text-align: center; padding: 20px; width: 100%; max-width: 400px; z-index: 1; }
         
-        /* 버튼 애니메이션 */
+        /* 버튼 스타일 및 애니메이션 */
         .lucky-btn { 
             background: linear-gradient(45deg, #ff0000, #8b0000); 
             color: #fff; border: none; padding: 25px 0; width: 100%; 
@@ -24,45 +24,59 @@
             transition: 0.3s; animation: pulse 1.2s infinite;
         }
         .lucky-btn:disabled { background: #333; color: #777; box-shadow: none; animation: none; cursor: not-allowed; }
-
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
-        /* 2. 로딩 애니메이션 */
+        /* 로딩바 세팅 */
         #loading-area { display: none; margin-top: 20px; }
-        .loader { border: 4px solid #333; border-top: 4px solid #ff0000; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
+        .loader { border: 4px solid #333; border-top: 4px solid #ff0000; border-radius: 50%; width: 45px; height: 45px; animation: spin 1s linear infinite; margin: 0 auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         .info { margin-top: 30px; color: #ccc; font-size: 14px; line-height: 1.6; }
-        
-        /* 3. 영상 오버레이 및 닫기 버튼 */
-        .video-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: flex; align-items: center; justify-content: center; z-index: 1000; }
-        #close-btn { 
-            position: absolute; top: 20px; right: 20px; display: none; 
-            background: rgba(255,255,255,0.2); border: none; color: #fff; 
-            padding: 10px 15px; border-radius: 50%; font-size: 20px; cursor: pointer; 
-            z-index: 1001;
+
+        /* 2. [중요] 영상 재생 레이어 (PC 대응 강화) */
+        #video-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #000; display: none; align-items: center; justify-content: center; 
+            z-index: 99999; pointer-events: auto;
         }
+        
+        /* PC에서도 확실히 클릭되도록 z-index와 크기 조정 */
+        #close-btn { 
+            position: absolute; top: 30px; right: 30px; display: none; 
+            background: rgba(255,255,255,0.3); border: 2px solid #fff; color: #fff; 
+            width: 55px; height: 55px; border-radius: 50%; font-size: 28px; 
+            font-weight: bold; cursor: pointer; z-index: 100000;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        video { width: 100%; height: 100%; object-fit: contain; }
     </style>
 </head>
 <body>
     <div id="main-content" class="container">
-        <h1 id="title" style="margin-bottom: 40px; color: #ff0000; text-shadow: 0 0 15px #ff0000;">🎁 LUCKY BOX</h1>
-        
+        <h1 style="margin-bottom: 40px; color: #ff0000; text-shadow: 0 0 15px #ff0000;">🎁 LUCKY BOX</h1>
         <button id="main-btn" class="lucky-btn" onclick="startLucky()"> 🔓 상자 열기 </button>
         
         <div id="loading-area">
             <div class="loader"></div>
-            <p style="margin-top:15px; color:#ff0000; font-weight:bold;">당첨 확인 중...</p>
+            <p style="margin-top:15px; color:#ff0000; font-weight:bold;">당첨 정보 확인 중...</p>
         </div>
 
-        <div id="info-text" class="info">
+        <div class="info">
             오늘의 시크릿 행운을 확인하세요!<br>
             <small style="opacity: 0.5;">본 페이지는 성인 인증 및 보안 연결을 지원합니다.</small>
         </div>
     </div>
 
+    <div id="video-overlay">
+        <video id="luckyVideo" playsinline muted>
+            <source src="" type="video/mp4">
+        </video>
+        <div id="close-btn" onclick="stopAndClose()">✕</div>
+    </div>
+
     <script>
-        // 기존 링크 유지
+        // 사장님 링크 그대로 유지
         const videoLinks = [ 
             "https://image2url.com/r2/default/videos/1773757057551-2b5fe024-98af-4ad6-ad62-a233ca83f3e2.mp4",
             "https://image2url.com/r2/default/videos/1773757406771-8c34d23e-5d10-4f08-aeae-0f58f5bf1c93.mp4",
@@ -70,92 +84,65 @@
         ];
         const adLinks = [ "https://link.coupang.com/a/dLXD5X", "https://link.coupang.com/a/dN4QKg" ];
 
-        // 4. 뒤로가기 방지 로직
+        // [보안] 뒤로가기 가두기
         history.pushState(null, null, location.href);
         window.onpopstate = function() {
             history.pushState(null, null, location.href);
             alert("잠깐! 아직 확인하지 않은 선물이 있습니다. 한 번 더 도전하세요!");
         };
 
-        // 5. 참여 제한 로직
-        function checkLimit() {
-            const today = new Date().toDateString();
-            const lastDate = localStorage.getItem('lastDate');
-            if (lastDate !== today) {
-                const randomLimit = Math.floor(Math.random() * 4) + 7; 
-                localStorage.setItem('lastDate', today);
-                localStorage.setItem('dailyLimit', randomLimit);
-                localStorage.setItem('clickCount', '0');
-            }
-            let limit = parseInt(localStorage.getItem('dailyLimit'));
-            let count = parseInt(localStorage.getItem('clickCount'));
-
-            if (count >= limit) {
-                document.getElementById('main-btn').innerText = "내일 다시 도전하세요";
-                document.getElementById('main-btn').disabled = true;
-                document.getElementById('info-text').innerHTML = "오늘의 참여 횟수를 모두 소모했습니다.<br>광고 확인 후 내일 다시 찾아주세요!";
-                return false;
-            }
-            localStorage.setItem('clickCount', count + 1);
-            return true;
-        }
-
-        // 6. 시작 로직 (확률 5:5)
         function startLucky() {
-            if (!checkLimit()) {
-                setTimeout(() => { window.location.href = adLinks[Math.floor(Math.random() * adLinks.length)]; }, 1000);
-                return;
-            }
-
             const btn = document.getElementById('main-btn');
             const loading = document.getElementById('loading-area');
+            
             btn.style.display = 'none';
             loading.style.display = 'block';
 
             setTimeout(() => {
                 const rand = Math.random();
-                if (rand < 0.5) { 
-                    playVideo(videoLinks[Math.floor(Math.random() * videoLinks.length)]);
+                if (rand < 0.5) { // 5:5 확률
+                    showVideo(videoLinks[Math.floor(Math.random() * videoLinks.length)]);
                 } else {
                     window.location.href = adLinks[Math.floor(Math.random() * adLinks.length)];
                 }
-            }, 1500);
+            }, 1800); 
         }
 
-        // 7. 영상 재생 로직 (수정됨)
-        function playVideo(url) {
-            document.getElementById('main-content').style.display = 'none';
-            
-            let overlay = document.createElement('div');
-            overlay.id = 'video-layer';
-            overlay.className = 'video-overlay';
-            overlay.innerHTML = `
-                <video id="luckyVideo" autoplay playsinline muted style="width:100%; height:100%;">
-                    <source src="${url}" type="video/mp4">
-                </video>
-                <button id="close-btn" onclick="closeVideo()">✕</button>
-            `;
-            document.body.appendChild(overlay);
-
+        function showVideo(url) {
+            const overlay = document.getElementById('video-overlay');
             const video = document.getElementById('luckyVideo');
-            
-            // 5초 뒤 닫기 버튼 등장
-            setTimeout(() => {
-                const closeBtn = document.getElementById('close-btn');
-                if(closeBtn) closeBtn.style.display = 'block';
+            const closeBtn = document.getElementById('close-btn');
+
+            video.src = url;
+            overlay.style.display = 'flex';
+            video.load(); // PC 브라우저 대응: 강제 로드
+            video.play();
+
+            // 5초 뒤에 ✕ 버튼 등장 (PC에서도 잘 보이게 display: flex로 설정)
+            setTimeout(() => { 
+                closeBtn.style.setProperty('display', 'flex', 'important'); 
             }, 5000);
 
-            video.onended = () => { closeVideo(); };
+            video.onended = stopAndClose;
         }
 
-        // 8. [핵심] 영상 끄고 메인으로 복귀하는 함수
-        function closeVideo() {
-            const overlay = document.getElementById('video-layer');
-            if (overlay) overlay.remove(); // 영상 레이어 삭제
-            
-            document.getElementById('main-content').style.display = 'block'; // 메인 다시 보이기
-            document.getElementById('main-btn').style.display = 'block'; // 버튼 원상복구
-            document.getElementById('loading-area').style.display = 'none'; // 로딩바 숨기기
+        // [핵심] PC 브라우저의 렉과 보안 문제를 해결하는 종료 함수
+        function stopAndClose() {
+            const overlay = document.getElementById('video-overlay');
+            const video = document.getElementById('luckyVideo');
+            const closeBtn = document.getElementById('close-btn');
+
+            video.pause();
+            video.src = ""; // 소스 초기화 (PC 메모리 해제)
+            video.load();
+
+            overlay.style.display = 'none';
+            closeBtn.style.display = 'none';
+
+            // 메인 화면으로 완벽 복귀
+            document.getElementById('main-content').style.display = 'block';
+            document.getElementById('main-btn').style.display = 'block';
+            document.getElementById('loading-area').style.display = 'none';
         }
     </script>
 </body>
