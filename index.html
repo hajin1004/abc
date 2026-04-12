@@ -2,133 +2,220 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VIP LUCKY BOX</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LUCKY BOX CHALLENGE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        body { 
-            background: #000 url('https://raw.githubusercontent.com/hajin1004/abc/main/bg.png') no-repeat center center; 
-            background-size: cover; color: #fff; font-family: -apple-system, sans-serif; 
-            display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; overflow: hidden; 
+        :root {
+            --primary-blue: #007bff;
+            --lucky-orange: #ff8c00;
+            --bright-yellow: #ffd700;
+            --dark-bg: #0f172a;
         }
-        body::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: -1; }
 
-        .container { text-align: center; padding: 20px; width: 100%; max-width: 400px; z-index: 1; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            background-color: var(--dark-bg);
+            font-family: 'Noto Sans KR', sans-serif;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 배경 효과: 조금 더 밝고 경쾌한 느낌 */
+        .bg-effect {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+            z-index: -1;
+        }
+
+        .container { text-align: center; z-index: 1; width: 100%; max-width: 400px; padding: 20px; }
         
-        .lucky-btn { 
-            background: linear-gradient(45deg, #ff0000, #8b0000); 
-            color: #fff; border: none; padding: 25px 0; width: 100%; 
-            font-size: 26px; font-weight: bold; border-radius: 15px; 
-            cursor: pointer; box-shadow: 0 0 30px rgba(255, 0, 0, 0.6);
-            transition: 0.3s; animation: pulse 1.2s infinite;
-        }
-        .lucky-btn:disabled { background: #333; color: #777; box-shadow: none; animation: none; cursor: not-allowed; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-
-        #loading-area { display: none; margin-top: 20px; }
-        .loader { border: 4px solid #333; border-top: 4px solid #ff0000; border-radius: 50%; width: 45px; height: 45px; animation: spin 1s linear infinite; margin: 0 auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        .info { margin-top: 30px; color: #ccc; font-size: 14px; line-height: 1.6; }
-
-        /* 영상 레이어 */
-        #video-overlay { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: #000; display: none; align-items: center; justify-content: center; 
-            z-index: 99999;
-        }
-        
-        /* ✕ 버튼 초기 상태: 무조건 숨김(none) */
-        #close-btn { 
-            position: absolute; top: 30px; right: 30px; display: none; 
-            background: rgba(255,255,255,0.3); border: 2px solid #fff; color: #fff; 
-            width: 55px; height: 55px; border-radius: 50%; font-size: 28px; 
-            font-weight: bold; cursor: pointer; z-index: 100000;
-            align-items: center; justify-content: center;
+        .title {
+            font-weight: 900;
+            font-size: 2.8rem;
+            color: var(--bright-yellow);
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+            margin-bottom: 5px;
+            letter-spacing: -1px;
         }
 
-        video { width: 100%; height: 100%; object-fit: contain; }
+        .subtitle { font-size: 1.1rem; color: #94a3b8; margin-bottom: 40px; font-weight: 500; }
+
+        /* 럭키 박스 디자인: 오렌지 & 블루 조합 */
+        .box-wrapper {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            margin: 0 auto 50px;
+            cursor: pointer;
+            perspective: 1000px;
+        }
+
+        .box-body {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--lucky-orange) 0%, #ff4500 100%);
+            border: 4px solid white;
+            box-shadow: 0 10px 40px rgba(255, 140, 0, 0.4);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+
+        .box-lid {
+            position: absolute;
+            top: -12%; left: -5%; width: 110%; height: 35%;
+            background: #ff4500;
+            border: 4px solid white;
+            border-radius: 12px;
+            z-index: 2;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .box-ribbon-v {
+            position: absolute;
+            top: 0; left: 50%; transform: translateX(-50%);
+            width: 35px; height: 100%;
+            background: white;
+            opacity: 0.9;
+        }
+
+        .lucky-badge {
+            position: relative;
+            background: white;
+            color: var(--lucky-orange);
+            padding: 8px 12px;
+            font-weight: 900;
+            font-size: 1.8rem;
+            border-radius: 8px;
+            z-index: 3;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        /* 버튼 디자인: 블루 계열 */
+        .open-btn {
+            background: linear-gradient(to bottom, #3b82f6, #2563eb);
+            color: #fff;
+            border: none;
+            padding: 18px 40px;
+            font-size: 1.5rem;
+            font-weight: 900;
+            border-radius: 15px;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
+            transition: all 0.2s;
+            width: 85%;
+        }
+
+        .open-btn:active { transform: scale(0.96); }
+
+        /* 결과 오버레이 */
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #000;
+            display: none;
+            z-index: 100;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: #000;
+        }
+
+        iframe { width: 100%; height: 100%; border: none; }
+
+        .loading {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--bright-yellow);
+            font-weight: bold;
+            z-index: 101;
+            font-size: 1.2rem;
+        }
     </style>
 </head>
 <body>
-    <div id="main-content" class="container">
-        <h1 style="margin-bottom: 40px; color: #ff0000; text-shadow: 0 0 15px #ff0000;">🎁 LUCKY BOX</h1>
-        <button id="main-btn" class="lucky-btn" onclick="startLucky()"> 🔓 상자 열기 </button>
-        <div id="loading-area">
-            <div class="loader"></div>
-            <p style="margin-top:15px; color:#ff0000; font-weight:bold;">당첨 정보 확인 중...</p>
+    <div class="bg-effect"></div>
+    
+    <div class="container">
+        <h1 class="title">LUCKY BOX</h1>
+        <p class="subtitle">과연 무엇이 들어있을까요?</p>
+
+        <div class="box-wrapper" onclick="startLucky()">
+            <div class="box-lid" id="lid"></div>
+            <div class="box-body" id="body">
+                <div class="box-ribbon-v"></div>
+                <div class="lucky-badge">?</div>
+            </div>
         </div>
-        <div class="info">
-            오늘의 시크릿 행운을 확인하세요!<br>
-            <small style="opacity: 0.5;">본 페이지는 성인 인증 및 보안 연결을 지원합니다.</small>
-        </div>
+
+        <button class="open-btn" onclick="startLucky()">행운의 상자 열기</button>
     </div>
 
-    <div id="video-overlay">
-        <video id="luckyVideo" playsinline muted>
-            <source src="" type="video/mp4">
-        </video>
-        <div id="close-btn" onclick="stopAndClose()">✕</div>
+    <div class="overlay" id="overlay">
+        <div class="video-container" id="videoContainer">
+            <div class="loading" id="loadingText">행운 로딩 중...</div>
+            <iframe id="videoFrame" allow="autoplay"></iframe>
+        </div>
     </div>
 
     <script>
-        const videoLinks = [ 
-            "https://image2url.com/r2/default/videos/1773757057551-2b5fe024-98af-4ad6-ad62-a233ca83f3e2.mp4",
-            "https://image2url.com/r2/default/videos/1773757406771-8c34d23e-5d10-4f08-aeae-0f58f5bf1c93.mp4",
-            "https://image2url.com/r2/default/videos/1773757454966-dabbda65-27f1-4846-bf98-1984d3cf37ad.mp4"
-        ];
-        const adLinks = [ "https://link.coupang.com/a/dLXD5X", "https://link.coupang.com/a/dN4QKg" ];
+        // 사용자님의 앱스 스크립트 주소 그대로 유지
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbxbFAxud3p_aLN7kNYLl9W4EHAeNJujayH0KBHMVVXqFzMBBP72YvqicGb6_kHi_64y/exec";
 
-        function startLucky() {
-            const btn = document.getElementById('main-btn');
-            const loading = document.getElementById('loading-area');
-            btn.style.display = 'none';
-            loading.style.display = 'block';
+        let isProcessing = false;
 
-            setTimeout(() => {
-                const rand = Math.random();
-                if (rand < 0.5) { 
-                    showVideo(videoLinks[Math.floor(Math.random() * videoLinks.length)]);
-                } else {
-                    window.location.href = adLinks[Math.floor(Math.random() * adLinks.length)];
+        async function startLucky() {
+            if (isProcessing) return;
+            isProcessing = true;
+
+            const lid = document.getElementById('lid');
+            const overlay = document.getElementById('overlay');
+            const frame = document.getElementById('videoFrame');
+            const loadingText = document.getElementById('loadingText');
+
+            // 1. 애니메이션 시작
+            lid.style.transform = "translateY(-120px) rotate(-15deg) scale(1.1)";
+            loadingText.style.display = 'block'; 
+            
+            try {
+                // 2. 데이터 가져오기
+                const response = await fetch(GAS_URL);
+                const data = await response.json();
+
+                if (data.type === "video") {
+                    frame.src = data.url;
+                    overlay.style.display = 'flex';
+
+                    // iframe 로드 완료 시 로딩 문구 제거
+                    frame.onload = function() {
+                        loadingText.style.display = 'none';
+                    };
+
+                } else if (data.type === "ad") {
+                    window.location.href = data.url;
                 }
-            }, 1800); 
-        }
-
-        function showVideo(url) {
-            const overlay = document.getElementById('video-overlay');
-            const video = document.getElementById('luckyVideo');
-            const closeBtn = document.getElementById('close-btn');
-
-            // 1. 영상 세팅 및 재생
-            video.src = url;
-            overlay.style.display = 'flex';
-            closeBtn.style.display = 'none'; // 재생 직후에는 다시 한번 버튼 숨김 강제
-            video.load();
-            video.play();
-
-            // 2. [핵심] 정확히 5초 뒤에 ✕ 버튼 등장시키기
-            setTimeout(() => { 
-                closeBtn.style.setProperty('display', 'flex', 'important'); 
-            }, 5000); // 5000ms = 5초
-
-            video.onended = stopAndClose;
-        }
-
-        function stopAndClose() {
-            const overlay = document.getElementById('video-overlay');
-            const video = document.getElementById('luckyVideo');
-            const closeBtn = document.getElementById('close-btn');
-
-            video.pause();
-            video.src = "";
-            video.load();
-
-            overlay.style.display = 'none';
-            closeBtn.style.display = 'none'; // 닫을 때 버튼 다시 숨기기
-
-            document.getElementById('main-content').style.display = 'block';
-            document.getElementById('main-btn').style.display = 'block';
-            document.getElementById('loading-area').style.display = 'none';
+            } catch (e) {
+                alert("다시 시도해 주세요!");
+                lid.style.transform = "none";
+                isProcessing = false;
+            }
         }
     </script>
 </body>
